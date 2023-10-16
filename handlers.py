@@ -10,10 +10,14 @@ import states
 import config
 import cryptopay
 import connect_db
+import send_trx
+
 
 router = Router()
 db = connect_db.BDBConnector()
 cryptopay = cryptopay.Payment()
+# trx = send_trx.SendTrx()
+
 
 
 @router.message(Command('start'))

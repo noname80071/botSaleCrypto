@@ -2,3 +2,4 @@ BOT_TOKEN = '6298156371:AAFgti0xmFkkVoCDsOSVsQEqHK_-b6_il8Q'
 CRYPTOPAY_TOKEN = '124135:AAbdT2WIplrWg9EtIR2eSBdyS2oNd1ktAa7'
 CRYPTOPAY_TOKEN_TEST = '9097:AAELuQk9mD2XQnKGQv54hiQuuzYapI0ofiI'
 suc_transactions = 0
+crypto_wallet_address = 'TFGnyeeXsMLQv52LkEHiBKFdZaiuvDHTVp'
