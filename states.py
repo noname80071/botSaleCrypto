@@ -7,3 +7,8 @@ class SetPrice(StatesGroup):
 
 class PaymentSuccess(StatesGroup):
     payment_success = State()
+
+
+class PayBalance(StatesGroup):
+    pay_balance = State()
+

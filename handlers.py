@@ -7,18 +7,20 @@ import requests
 import kb
 import text
 import states
-import user_data
 import config
 import cryptopay
-
+import connect_db
 
 router = Router()
+db = connect_db.BDBConnector()
+cryptopay = cryptopay.Payment()
 
 
 @router.message(Command('start'))
 async def start_handler(msg: Message):
     await msg.answer(f'{text.greet.format(name=msg.from_user.full_name)}',
                      reply_markup=kb.menu, parse_mode='HTML')
+    await db.add_user(user_id=msg.from_user.id, name=msg.from_user.full_name)
 
 
 @router.callback_query(F.data == 'info')
@@ -29,12 +31,30 @@ async def info(clbck: CallbackQuery):
 
 @router.callback_query(F.data == 'profile')
 async def profile(clbck: CallbackQuery):
+    user_balance = await db.get_balance(clbck.from_user.id)
+    total_amount = await db.get_total_amount(clbck.from_user.id)
+    suc_trans = await db.get_suc_transactions(clbck.from_user.id)
     await clbck.message.answer(text.profile_info.format(user_id=clbck.from_user.id,
-                                                        user_balance=user_data.user_balance,
-                                                        total_amount=user_data.user_total_amount,
-                                                        suc_trans=user_data.suc_transactions),
+                                                        user_balance=user_balance,
+                                                        total_amount=total_amount,
+                                                        suc_trans=suc_trans),
                                reply_markup=kb.menu,
                                parse_mode='HTML')
+
+
+@router.callback_query(F.data == 'pay_balance')
+async def pay_balance(clbck: CallbackQuery, state: FSMContext):
+    await clbck.message.answer(text.pay_balance)
+    await state.set_state(states.PayBalance.pay_balance)
+
+
+@router.message(states.PayBalance.pay_balance)
+async def pay_balance_message(msg: Message, state: FSMContext):
+    await state.clear()
+    amount = float(msg.text)
+    await db.set_amount(user_id=msg.from_user.id, new_amount=amount)
+    await msg.answer(text=text.pay_method_text,
+                     reply_markup=kb.pay_balance_menu)
 
 
 @router.callback_query(F.data == 'buy_trx')
@@ -47,14 +67,18 @@ async def buy_trx(clbck: CallbackQuery, state: FSMContext):
 @router.message(states.SetPrice.step_set_price)
 async def buy_trx_message(msg: Message, state: FSMContext):
     await state.clear()
-    user_data.amount = float(msg.text)
-    user_data.amount_change = round(user_data.amount / 12, 1)
-    exchange = cryptopay.Payment(amount=user_data.amount)
-    user_data.amount_usd = await exchange.exchange()
-    await msg.answer(text.buy_trx_message.format(amount=user_data.amount,
-                                                 amount_change=user_data.amount_change),
+    await db.set_amount(user_id=msg.from_user.id, new_amount=float(msg.text))
+    await db.set_amount_trx(user_id=msg.from_user.id, new_amount_trx=round(float(msg.text) / 12, 1))
+    exchange = await cryptopay.exchange(amount=float(msg.text))
+    await db.set_amount_usd(user_id=msg.from_user.id, new_amount_usd=exchange)
+
+    amount = await db.get_amount(msg.from_user.id)
+    amount_changed = await db.get_amount_trx(msg.from_user.id)
+    balance = await db.get_balance(msg.from_user.id)
+    await msg.answer(text.buy_trx_message.format(amount=amount,
+                                                 amount_change=amount_changed,
+                                                 user_balance=balance),
                      reply_markup=kb.buy_menu)
-    return user_data.amount, user_data.amount_change, user_data.amount_usd
 
 
 @router.callback_query(F.data == 'pay_method')
@@ -64,23 +88,47 @@ async def pay_method(clbck: CallbackQuery):
 
 
 @router.callback_query(F.data == 'cryptobot')
-async def crypto_pay(clbck: CallbackQuery, state: FSMContext): # Переделать когда сделаю базу.
+async def crypto_pay(clbck: CallbackQuery, state: FSMContext):
     await state.set_state(states.PaymentSuccess.payment_success)
-    payment = cryptopay.Payment(amount_usd=user_data.amount_usd)
-    payment = await payment.create_invoice()
+    amount = await db.get_amount(user_id=clbck.from_user.id)
+    amount_usd = await cryptopay.exchange(amount=amount)
+    payment = await cryptopay.create_invoice(amount_usd=amount_usd)
     pay_url = payment[0]
-    user_data.user_invoice_id = payment[1]
-
-    await clbck.message.answer(text=f'Чтобы оплатить {user_data.amount_usd} USD, перейдите по ссылке: {pay_url}',
+    await db.set_invoice_id(user_id=clbck.from_user.id, new_invoice_id=payment[1])
+    await clbck.message.answer(text=text.pay_balance_link.format(amount_usd=amount_usd, pay_url=pay_url),
                                reply_markup=kb.pay_success)
+
+
+@router.callback_query(F.data == 'from_balance')
+async def from_balance(clbck: CallbackQuery):
+    amount = await db.get_amount(clbck.from_user.id)
+
+    await clbck.message.answer(text=text.from_balance_message.format(amount=amount),
+                               reply_markup=kb.from_balance_success)
+
+
+@router.callback_query(F.data == 'from_balance_success')
+async def from_balance_success(clbck: CallbackQuery):
+    amount = await db.get_amount(clbck.from_user.id)
+    balance = await db.get_balance(clbck.from_user.id)
+
+    if amount >= balance:
+        await clbck.message.answer(text=text.remove_balance_unsuccess)
+    else:
+        await db.sub_balance(user_id=clbck.from_user.id, amount=amount)
+        await db.set_suc_transactions(user_id=clbck.from_user.id)
+        await clbck.message.answer(text=text.remove_balance_success)
 
 
 @router.callback_query(F.data == 'pay_success', states.PaymentSuccess.payment_success)
 async def pay_success(clbck: CallbackQuery, state: FSMContext):
-    pay_suc = cryptopay.Payment()
-    pay_status = await pay_suc.success_invoice(user_data.user_invoice_id)
+    amount = await db.get_amount(clbck.from_user.id)
+    last_invoice_id = await db.get_last_invoice_id(clbck.from_user.id)
+    pay_status = await cryptopay.success_invoice(last_invoice_id)
     if pay_status == 'paid':
-        await clbck.message.answer(text.pay_success.format(amount=user_data.amount))
+        await clbck.message.answer(text.pay_success.format(amount=amount))
         await state.clear()
+        await db.pay_balance(user_id=clbck.from_user.id, amount=amount)
+        await db.set_total_balance(user_id=clbck.from_user.id, amount=amount)
     else:
         await clbck.message.answer(text=text.pay_unsuccess)
