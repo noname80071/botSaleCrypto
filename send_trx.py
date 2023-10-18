@@ -1,19 +1,35 @@
-# from tronapi import Tron, HttpProvider
-#
-#
-# full_node = HttpProvider('https://api.trongrid.io')
-# solidity_node = HttpProvider('https://api.trongrid.io')
-# event_server = HttpProvider('https://api.trongrid.io')
-#
-# tron = Tron(full_node=full_node,
-#             solidity_node=solidity_node,
-#             event_server=event_server)
-# tron.default_block = 'latest'
-#
-# tron.private_key = 'genuine obscure comic panda must view throw trend goat hat chase idle'
-# tron.default_address = 'TZHfJB6G8QAZk24U1ewbrUYgQDrSAAd8nA'
-#
-# # added message
-# send = tron.trx.send_transaction('TFGnyeeXsMLQv52LkEHiBKFdZaiuvDHTVp', 1)
-#
-# print(send)
+from tronpy import Tron
+from tronpy.keys import PrivateKey
+
+import config
+
+
+class Trons:
+    def __init__(self):
+        self.WALLET_ADDRESS = config.wallet_address
+        self.PRIVATE_KEY = config.wallet_private_key
+
+        # connect to the Testnet Tron blockchain
+        self.client = Tron()
+
+    async def send_tron(self, amount, wallet):
+        amount = amount * 1000000
+        priv_key = PrivateKey(bytes.fromhex(self.PRIVATE_KEY))
+        # create transaction and broadcast it
+        txn = (
+            self.client.trx.transfer(self.WALLET_ADDRESS, wallet, amount)
+            .memo("Transaction Description")
+            .build()
+            .inspect()
+            .sign(priv_key)
+            .broadcast()
+        )
+        # wait until the transaction is sent through and then return the details
+        print(f'TRON {txn.txid}')
+        return txn.txid
+
+        # return the exception
+        # except Exception as ex:
+        #     print("exception")
+        #     print(ex)
+        #     return ex

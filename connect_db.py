@@ -14,6 +14,7 @@ class BDBConnector:
             amount BIGINT,
             amount_trx BIGINT,
             amount_usd BIGINT,
+            wallet_number TEXT,
             last_invoice_id BIGINT,
             total_amount BIGINT,
             suc_transactions BIGINT)""")
@@ -23,7 +24,8 @@ class BDBConnector:
     async def add_user(self, user_id, name):
         self.sql.execute(f"SELECT id FROM users WHERE id={user_id}")
         if self.sql.fetchone() is None:
-            self.sql.execute(f"INSERT INTO users VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)", (user_id, name, 0, 0, 0, 0, 0, 0, 0))
+            self.sql.execute(f"INSERT INTO users VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                             (user_id, name, 0, 0, 0, 0, 0, 0, 0, ''))
             self.db.commit()
             print('Пользователь добавлен!')
         else:
@@ -35,7 +37,8 @@ class BDBConnector:
         self.sql.execute(f"SELECT id FROM users WHERE id={user_id}")
 
         if self.sql.fetchone() is None:
-            self.sql.execute(f"INSERT INTO users VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)", (user_id, name, 0, 0, 0, 0, 0, 0, 0))
+            self.sql.execute(f"INSERT INTO users VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                             (user_id, name, 0, 0, 0, 0, 0, 0, 0, 'c'))
             self.db.commit()
             print('Пользователь добавлен!')
         else:
@@ -101,6 +104,11 @@ class BDBConnector:
         user_suc_transactions = self.sql.fetchone()[0]
         return user_suc_transactions
 
+    async def get_number_wallet(self, user_id):
+        self.sql.execute(f"SELECT wallet_number FROM users WHERE id={user_id}")
+        user_number_wallet = self.sql.fetchone()[0]
+        return user_number_wallet
+
     async def set_amount(self, user_id, new_amount):
         self.sql.execute(f"UPDATE users SET amount={new_amount} WHERE id={user_id}")
         self.db.commit()
@@ -115,6 +123,10 @@ class BDBConnector:
 
     async def set_invoice_id(self, user_id, new_invoice_id):
         self.sql.execute(f"UPDATE users SET last_invoice_id={new_invoice_id} WHERE id={user_id}")
+        self.db.commit()
+
+    async def set_number_wallet(self, user_id, number_wallet):
+        self.sql.execute(f"UPDATE users SET wallet_number='{number_wallet}' WHERE id={user_id}")
         self.db.commit()
 
     async def set_suc_transactions(self, user_id):

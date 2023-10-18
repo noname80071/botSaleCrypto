@@ -16,8 +16,7 @@ import send_trx
 router = Router()
 db = connect_db.BDBConnector()
 cryptopay = cryptopay.Payment()
-# trx = send_trx.SendTrx()
-
+trx = send_trx.Trons()
 
 
 @router.message(Command('start'))
@@ -104,24 +103,43 @@ async def crypto_pay(clbck: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data == 'from_balance')
-async def from_balance(clbck: CallbackQuery):
-    amount = await db.get_amount(clbck.from_user.id)
-
-    await clbck.message.answer(text=text.from_balance_message.format(amount=amount),
-                               reply_markup=kb.from_balance_success)
+async def set_wallet(clbck: CallbackQuery, state: FSMContext):
+    await clbck.message.answer(text=text.set_wallet)
+    await state.set_state(states.SetWallet.set_wallet)
 
 
-@router.callback_query(F.data == 'from_balance_success')
-async def from_balance_success(clbck: CallbackQuery):
-    amount = await db.get_amount(clbck.from_user.id)
-    balance = await db.get_balance(clbck.from_user.id)
+@router.message(states.SetWallet.set_wallet)
+async def set_wallet_number(msg: Message, state: FSMContext):
+    await db.set_number_wallet(user_id=msg.from_user.id, number_wallet=msg.text)
+    number_wallet = await db.get_number_wallet(user_id=msg.from_user.id)
+    await msg.answer(text=text.set_wallet_success.format(user_wallet=number_wallet),
+                     reply_markup=kb.wallet_success)
 
-    if amount >= balance:
-        await clbck.message.answer(text=text.remove_balance_unsuccess)
-    else:
-        await db.sub_balance(user_id=clbck.from_user.id, amount=amount)
-        await db.set_suc_transactions(user_id=clbck.from_user.id)
-        await clbck.message.answer(text=text.remove_balance_success)
+
+@router.callback_query(F.data == 'wallet_success')
+async def set_wallet_success(clbck: CallbackQuery):
+    balance = await db.get_balance(user_id=clbck.from_user.id)
+    amount_trx = await db.get_amount_trx(user_id=clbck.from_user.id)
+    amount = await db.get_amount(user_id=clbck.from_user.id)
+    wallet = await db.get_number_wallet(user_id=clbck.from_user.id)
+    try:
+        if amount > balance:
+            await clbck.message.answer(text=text.remove_balance_success)
+        else:
+            transaction_id = await trx.send_tron(amount=amount_trx, wallet=wallet)
+            try:
+                await db.sub_balance(user_id=clbck.from_user.id, amount=amount)
+                await db.set_suc_transactions(user_id=clbck.from_user.id)
+                await clbck.message.answer(text=text.pay_trx_success.format(amount_trx=amount_trx,
+                                                                            user_wallet=f'{wallet[0:2]}...{wallet[-4:-1]}',
+                                                                            transaction_id=transaction_id,
+                                                                            amount=amount))
+            except Exception as e:
+                print(e)
+                await clbck.message.answer(text=text.pay_unsuccess)
+    except Exception as e:
+        print(e)
+        await clbck.message.answer(text=text.pay_unsuccess)
 
 
 @router.callback_query(F.data == 'pay_success', states.PaymentSuccess.payment_success)

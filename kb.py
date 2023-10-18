@@ -29,9 +29,16 @@ pay_balance_menu = InlineKeyboardMarkup(inline_keyboard=pay_balance_menu)
 pay_success = [
     [InlineKeyboardButton(text='Проверить оплату', callback_data='pay_success')]
 ]
-from_balance_success = [
-    [InlineKeyboardButton(text='Подтвердить', callback_data='from_balance_success'),
-     InlineKeyboardButton(text='Отмена', callback_data='pay_method')]]
-from_balance_success = InlineKeyboardMarkup(inline_keyboard=from_balance_success)
+# from_balance_success = [
+#     [InlineKeyboardButton(text='Подтвердить', callback_data='from_balance_success'),
+#      InlineKeyboardButton(text='Отмена', callback_data='pay_method')]]
+# from_balance_success = InlineKeyboardMarkup(inline_keyboard=from_balance_success)
 
 pay_success = InlineKeyboardMarkup(inline_keyboard=pay_success)
+
+wallet_success = [
+    [InlineKeyboardButton(text='Подтвердить', callback_data='wallet_success'),
+     InlineKeyboardButton(text='Отмена', callback_data='from_balance')]
+]
+wallet_success = InlineKeyboardMarkup(inline_keyboard=wallet_success)
+

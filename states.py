@@ -12,3 +12,7 @@ class PaymentSuccess(StatesGroup):
 class PayBalance(StatesGroup):
     pay_balance = State()
 
+
+class SetWallet(StatesGroup):
+    set_wallet = State()
+
