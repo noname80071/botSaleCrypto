@@ -132,3 +132,8 @@ class BDBConnector:
     async def set_suc_transactions(self, user_id):
         self.sql.execute(f"UPDATE users SET suc_transactions=suc_transactions+1 WHERE id={user_id}")
         self.db.commit()
+
+    async def search_user_info(self, user_id):
+        self.sql.execute(f"SELECT name, balance, total_amount, suc_transactions FROM users WHERE id={user_id}")
+        user_info = self.sql.fetchone()
+        return user_info

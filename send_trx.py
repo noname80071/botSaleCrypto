@@ -8,8 +8,6 @@ class Trons:
     def __init__(self):
         self.WALLET_ADDRESS = config.wallet_address
         self.PRIVATE_KEY = config.wallet_private_key
-
-        # connect to the Testnet Tron blockchain
         self.client = Tron()
 
     async def send_tron(self, amount, wallet):
@@ -27,9 +25,3 @@ class Trons:
         # wait until the transaction is sent through and then return the details
         print(f'TRON {txn.txid}')
         return txn.txid
-
-        # return the exception
-        # except Exception as ex:
-        #     print("exception")
-        #     print(ex)
-        #     return ex

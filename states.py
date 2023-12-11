@@ -16,3 +16,15 @@ class PayBalance(StatesGroup):
 class SetWallet(StatesGroup):
     set_wallet = State()
 
+
+class SearchId(StatesGroup):
+    search_id = State()
+
+
+class AddUserBalance(StatesGroup):
+    add_user_balance = State()
+
+
+class DeductUserBalance(StatesGroup):
+    deduct_user_balance = State()
+
