@@ -2,8 +2,8 @@ from tronpy import Tron
 from tronpy.keys import PrivateKey
 
 # your wallet information
-WALLET_ADDRESS = 'TU4jdo7F64ei9Lvbfb3K71HGczsFHM3Pmd'
-PRIVATE_KEY = '06f78bf338698a041b76b356a4947302da05aafb66db445814b84797689131bb'
+WALLET_ADDRESS = ''
+PRIVATE_KEY = ''
 
 # connect to the Testnet Tron blockchain
 client = Tron()
