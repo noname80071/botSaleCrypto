@@ -1,9 +1,9 @@
-BOT_TOKEN = '6298156371:AAFgti0xmFkkVoCDsOSVsQEqHK_-b6_il8Q'
-CRYPTOPAY_TOKEN = '124135:AAbdT2WIplrWg9EtIR2eSBdyS2oNd1ktAa7'
-CRYPTOPAY_TOKEN_TEST = '9097:AAELuQk9mD2XQnKGQv54hiQuuzYapI0ofiI'
+BOT_TOKEN = ''
+CRYPTOPAY_TOKEN = ''
+CRYPTOPAY_TOKEN_TEST = ''
 suc_transactions = 0
-wallet_address = 'TU4jdo7F64ei9Lvbfb3K71HGczsFHM3Pmd'
-wallet_private_key = '06f78bf338698a041b76b356a4947302da05aafb66db445814b84797689131bb'
-wallet = 'TZHfJB6G8QAZk24U1ewbrUYgQDrSAAd8nA'
+wallet_address = ''
+wallet_private_key = ''
+wallet = ''
 search_id = 0
-ADMIN_ID = (907933015, 5950100031)
+ADMIN_ID = (0)
